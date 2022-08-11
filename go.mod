@@ -1,4 +1,4 @@
-module github.com/digitalhurricane-io/sse
+module github.com/digitalhurricane-io/go-sse
 
 go 1.18
 

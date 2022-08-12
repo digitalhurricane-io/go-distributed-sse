@@ -13,18 +13,14 @@ type Broker struct {
 	streams          map[string]eventStream // key is stream ID
 	streamM          sync.RWMutex
 	redisClient      *redis.Client
-	pubSub           *redis.PubSub
 	streamFinishedCH chan string // stream ID
 }
 
 func NewBroker(redisClient *redis.Client) *Broker {
 
-	pubSub := redisClient.Subscribe(context.Background())
-
 	b := Broker{
 		streams:          make(map[string]eventStream),
 		redisClient:      redisClient,
-		pubSub:           pubSub,
 		streamFinishedCH: make(chan string, 1),
 	}
 
@@ -42,13 +38,6 @@ func (b *Broker) createStreamIfNotExists(streamID string) error {
 		return nil
 	}
 
-	nsStreamID := redisChannelName(streamID)
-
-	err := b.pubSub.Subscribe(context.Background(), nsStreamID)
-	if err != nil {
-		return err
-	}
-
 	stream := newEventStream(streamID, b.streamFinishedCH, b.redisClient)
 
 	b.streamM.Lock()
@@ -59,12 +48,6 @@ func (b *Broker) createStreamIfNotExists(streamID string) error {
 }
 
 func (b *Broker) removeStream(streamID string) error {
-	nsStreamID := redisChannelName(streamID)
-	err := b.pubSub.Unsubscribe(context.TODO(), nsStreamID)
-	if err != nil {
-		return err
-	}
-
 	b.streamM.RLock()
 	defer b.streamM.RUnlock()
 

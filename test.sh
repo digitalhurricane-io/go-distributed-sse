@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker run -P 6379:6379 --name sse-redis redis:latest
+docker run -p 44293:6379 -d --name sse-redis redis:latest
 
 go test -v
 

@@ -1,4 +1,4 @@
-package server_sent_event
+package gosse
 
 type eventStream struct {
 	id              string
@@ -14,8 +14,8 @@ func newEventStream(id string) eventStream {
 	s := eventStream{
 		id:              id,
 		clients:         make(map[string]chan Message),
-		subscribeCH:     make(chan Subscription),
-		unsubscribeCH:   make(chan Subscription),
+		subscribeCH:     make(chan Subscription, 1),
+		unsubscribeCH:   make(chan Subscription, 1),
 		broadcastRecvCH: make(chan envelope, 1),
 		done:            make(chan struct{}, 1),
 	}
@@ -53,7 +53,7 @@ func (s *eventStream) run() {
 
 		case e := <-s.broadcastRecvCH:
 			for clientID, c := range s.clients {
-				if e.senderID != clientID {
+				if e.excludeClientID != clientID {
 					c <- e.message
 				}
 			}

@@ -1,4 +1,4 @@
-package server_sent_event
+package gosse
 
 import (
 	"fmt"

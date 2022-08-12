@@ -1,4 +1,4 @@
-package server_sent_event
+package gosse
 
 import (
 	"context"
@@ -104,7 +104,16 @@ func (b *Broker) subscribe(streamID, clientID string) Subscription {
 	return sub
 }
 
-func (b *Broker) BroadCast(eventStreamID, senderClientID, message string) error {
+// Broadcast Will broadcast a message to all connected clients that are subscribed to
+// the specified eventStreamID. If you want to exclude a client, so that a client does not
+// receive a message, you may pass it's ID for the arg excludeClientID. Even though excludeClientID
+// is a variadic argument, only the first string passed will be used.
+func (b *Broker) Broadcast(eventStreamID, message string, excludeClientID ...string) error {
+	var excludedClientID string
+	if len(excludeClientID) > 0 {
+		excludedClientID = excludeClientID[0]
+	}
+
 	b.streamM.RLock()
 	_, streamExists := b.streams[eventStreamID]
 	b.streamM.RUnlock()
@@ -112,7 +121,7 @@ func (b *Broker) BroadCast(eventStreamID, senderClientID, message string) error 
 	if !streamExists {
 		return errors.Errorf("no stream with id: %s", eventStreamID)
 	}
-	msg := fmt.Sprintf("%s|%s", senderClientID, message)
+	msg := newRedisMessage(message, excludedClientID)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

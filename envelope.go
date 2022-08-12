@@ -1,17 +1,24 @@
-package server_sent_event
+package gosse
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type envelope struct {
-	senderID string
-	message  Message
+	excludeClientID string
+	message         Message
 }
 
 func newEnvelope(msgFromRedis string) envelope {
 	split := strings.Split(msgFromRedis, "|")
-	e := envelope{senderID: split[0]}
+	e := envelope{excludeClientID: split[0]}
 	if len(split) > 1 {
 		e.message = Message(split[1])
 	}
 	return e
+}
+
+func newRedisMessage(message, excludeClientID string) string {
+	return fmt.Sprintf("%s|%s", excludeClientID, message)
 }

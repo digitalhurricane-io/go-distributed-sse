@@ -2,6 +2,7 @@ package gosse
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 )
@@ -14,8 +15,10 @@ type contextKey string
 // A middleware function should set this key before the http handler runs.
 var ClientIDContextKey = contextKey("clientID")
 
-func newSSEHttpHandler(broker *Broker, streamID string) http.HandlerFunc {
+func newSSEHttpHandler(broker *Broker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		streamID := mux.Vars(r)["stream_id"]
 
 		flusher, ok := w.(http.Flusher)
 		if !ok {
@@ -26,6 +29,7 @@ func newSSEHttpHandler(broker *Broker, streamID string) http.HandlerFunc {
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("X-Accel-Buffering", "no")
 
 		clientID, ok := r.Context().Value(ClientIDContextKey).(string)
 		if !ok {
@@ -34,12 +38,17 @@ func newSSEHttpHandler(broker *Broker, streamID string) http.HandlerFunc {
 			return
 		}
 
-		sub := broker.subscribe(streamID, clientID)
+		client, err := broker.subscribe(streamID, clientID)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+			return
+		}
 
 	loop:
 		for {
 			select {
-			case msg, open := <-sub.Channel():
+			case msg, open := <-client.messages:
 				if !open {
 					break loop
 				}
@@ -51,7 +60,7 @@ func newSSEHttpHandler(broker *Broker, streamID string) http.HandlerFunc {
 				flusher.Flush()
 
 			case <-r.Context().Done():
-				sub.Unsubscribe()
+				client.Unsubscribe()
 				break
 			}
 		}

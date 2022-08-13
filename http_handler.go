@@ -2,7 +2,7 @@ package gosse
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
 )
@@ -18,7 +18,12 @@ var ClientIDContextKey = contextKey("clientID")
 func newSSEHttpHandler(broker *Broker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		streamID := mux.Vars(r)["stream_id"]
+		streamID := r.URL.Query().Get("stream_id")
+		if streamID == "" {
+			log.Println("stream_id query param must be defined")
+			w.WriteHeader(500)
+			return
+		}
 
 		flusher, ok := w.(http.Flusher)
 		if !ok {
@@ -33,9 +38,14 @@ func newSSEHttpHandler(broker *Broker) http.HandlerFunc {
 
 		clientID, ok := r.Context().Value(ClientIDContextKey).(string)
 		if !ok {
-			log.Println("clientID was not set")
-			w.WriteHeader(500)
-			return
+			id, err := uuid.NewUUID()
+			if err != nil {
+				log.Println("failed to generate uuid: ", err)
+				w.WriteHeader(500)
+				return
+			}
+
+			clientID = id.String()
 		}
 
 		client, err := broker.subscribe(streamID, clientID)

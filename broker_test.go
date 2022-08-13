@@ -43,7 +43,7 @@ func runHttpServer() {
 }
 
 func registerHttpHandler(b *Broker, streamName string) error {
-	h, err := b.NewSSEHttpHandler(streamName)
+	h, err := b.HttpHandler()
 	if err != nil {
 		return err
 	}

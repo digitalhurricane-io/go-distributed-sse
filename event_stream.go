@@ -19,7 +19,7 @@ type eventStream struct {
 	done             chan struct{}
 }
 
-// todo: stream needs to track how many connected clients it has. if it has no more clients,
+// stream needs to track how many connected clients it has. if it has no more clients,
 // it needs to signal to broker that it is no longer needed and cleanup. Each stream should
 // subscribe to a redis channel.
 
@@ -69,6 +69,7 @@ func (s *eventStream) run() {
 				s.streamFinishedCH <- s.id
 			}
 
+		// received a message from redis channel. send it to all clients.
 		case msg := <-s.pubSub.Channel():
 			e := newEnvelope(msg.Payload)
 			for clientID, c := range s.clients {
@@ -83,7 +84,7 @@ func (s *eventStream) run() {
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
+			defer cancel() // loop always breaks, so this will be called
 
 			err := s.pubSub.Unsubscribe(ctx, redisChannelName(s.id))
 			if err != nil {

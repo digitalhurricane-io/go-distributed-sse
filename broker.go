@@ -48,8 +48,8 @@ func (b *Broker) createStreamIfNotExists(streamID string) error {
 }
 
 func (b *Broker) removeStream(streamID string) error {
-	b.streamM.RLock()
-	defer b.streamM.RUnlock()
+	b.streamM.Lock()
+	defer b.streamM.Unlock()
 
 	stream := b.streams[streamID]
 	stream.Done() // exit goroutine

@@ -45,6 +45,9 @@ func newSSEHttpHandler(broker *Broker) http.HandlerFunc {
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
+		flusher.Flush()
+
 	loop:
 		for {
 			select {
@@ -52,7 +55,7 @@ func newSSEHttpHandler(broker *Broker) http.HandlerFunc {
 				if !open {
 					break loop
 				}
-				_, err := fmt.Fprintf(w, "data: %s\n\n", msg)
+				_, err = fmt.Fprintf(w, "data: %s\n\n", msg)
 				if err != nil {
 					log.Println(err)
 				}

@@ -98,7 +98,7 @@ func (b *Broker) Broadcast(eventStreamID, message string, excludeClientID ...str
 }
 
 // HttpHandler Returns a new http handler that will send events
-// to clients for specified event stream ID. stream ID is the gorilla mux var "stream_id".
+// to clients for specified event stream ID. stream ID is the query param "stream_id".
 func (b *Broker) HttpHandler() (http.HandlerFunc, error) {
 	return newSSEHttpHandler(b), nil
 }

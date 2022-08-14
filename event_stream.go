@@ -70,9 +70,9 @@ func (s *eventStream) run() {
 				s.streamFinishedCH <- s.id
 			}
 
-		// received a message from redis channel. send it to all clients.
+		// received a message from redis channel. send it to clients.
 		case msg := <-s.pubSub.Channel():
-			var ev ServerSentEvent
+			var ev serverSentEvent
 
 			err := json.Unmarshal([]byte(msg.Payload), &ev)
 			if err != nil {

@@ -90,7 +90,7 @@ func (b *Broker) Broadcast(eventStreamID, eventName, eventData string, excludeCl
 		excludedClientID = excludeClientID[0]
 	}
 
-	ev := ServerSentEvent{
+	ev := serverSentEvent{
 		EventName:        eventName,
 		Data:             eventData,
 		ExcludedClientID: excludedClientID,

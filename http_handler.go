@@ -1,10 +1,10 @@
 package gosse
 
 import (
-	"fmt"
 	"github.com/google/uuid"
 	"log"
 	"net/http"
+	"time"
 )
 
 // ContextKey Golang docs state that a custom type should be used when setting values in the context to
@@ -61,11 +61,19 @@ func newSSEHttpHandler(broker *Broker) http.HandlerFunc {
 	loop:
 		for {
 			select {
-			case msg, open := <-client.messages:
+			case ev, open := <-client.events:
 				if !open {
 					break loop
 				}
-				_, err = fmt.Fprintf(w, "data: %s\n\n", msg)
+				_, err = w.Write([]byte(ev.String()))
+				if err != nil {
+					log.Println(err)
+				}
+
+				flusher.Flush()
+
+			case <-time.After(60 * time.Second):
+				_, err = w.Write([]byte(":")) // send comment as keepalive
 				if err != nil {
 					log.Println(err)
 				}

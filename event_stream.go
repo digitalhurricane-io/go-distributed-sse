@@ -2,6 +2,7 @@ package gosse
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/go-redis/redis/v8"
 	"log"
 	"time"
@@ -61,7 +62,7 @@ func (s *eventStream) run() {
 			s.clients[client.id] = client
 
 		case client := <-s.clientUnsubscribedCH:
-			close(client.messages)
+			close(client.events)
 			delete(s.clients, client.id)
 
 			// if we have no more connected clients, signal to broker that it can clean up this stream
@@ -71,16 +72,23 @@ func (s *eventStream) run() {
 
 		// received a message from redis channel. send it to all clients.
 		case msg := <-s.pubSub.Channel():
-			e := newEnvelope(msg.Payload)
+			var ev ServerSentEvent
+
+			err := json.Unmarshal([]byte(msg.Payload), &ev)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+
 			for clientID, c := range s.clients {
-				if e.excludeClientID != clientID {
-					c.SendMessage(e.message)
+				if ev.ExcludedClientID != clientID {
+					c.SendEvent(ev)
 				}
 			}
 
 		case <-s.done:
 			for _, c := range s.clients {
-				close(c.messages) // frees up any http handler goroutines that were listening to this event stream
+				close(c.events) // frees up any http handler goroutines that were listening to this event stream
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

@@ -2,6 +2,7 @@ package gosse
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/go-redis/redis/v8"
 	"log"
 	"net/http"
@@ -83,17 +84,26 @@ func (b *Broker) subscribe(streamID, clientID string) (sseClient, error) {
 // the specified eventStreamID. If you want to exclude a client, so that a client does not
 // receive a message, you may pass it's ID for the arg excludeClientID. Even though excludeClientID
 // is a variadic argument, only the first string passed will be used.
-func (b *Broker) Broadcast(eventStreamID, message string, excludeClientID ...string) error {
+func (b *Broker) Broadcast(eventStreamID, eventName, eventData string, excludeClientID ...string) error {
 	var excludedClientID string
 	if len(excludeClientID) > 0 {
 		excludedClientID = excludeClientID[0]
 	}
 
-	msg := newRedisMessage(message, excludedClientID)
+	ev := ServerSentEvent{
+		EventName:        eventName,
+		Data:             eventData,
+		ExcludedClientID: excludedClientID,
+	}
+
+	evJson, err := json.Marshal(&ev)
+	if err != nil {
+		return err
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err := b.redisClient.Publish(ctx, redisChannelName(eventStreamID), msg).Result()
+	_, err = b.redisClient.Publish(ctx, redisChannelName(eventStreamID), evJson).Result()
 	return err
 }
 

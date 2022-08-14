@@ -65,6 +65,7 @@ func newSSEHttpHandler(broker *Broker) http.HandlerFunc {
 				if !open {
 					break loop
 				}
+
 				_, err = w.Write([]byte(ev.String()))
 				if err != nil {
 					log.Println(err)
@@ -82,7 +83,7 @@ func newSSEHttpHandler(broker *Broker) http.HandlerFunc {
 
 			case <-r.Context().Done():
 				client.Unsubscribe()
-				break
+				break loop
 			}
 		}
 	}

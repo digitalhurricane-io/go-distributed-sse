@@ -56,6 +56,7 @@ func (s *eventStream) Done() {
 }
 
 func (s *eventStream) run() {
+loop:
 	for {
 		select {
 		case client := <-s.subscribeCH:
@@ -101,7 +102,7 @@ func (s *eventStream) run() {
 
 			// since we're breaking the loop, we don't have to worry that any message will be sent on
 			// a closed client channel
-			break
+			break loop
 		}
 	}
 }

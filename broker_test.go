@@ -74,12 +74,12 @@ func TestBroadcast(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = b.Broadcast("aaa", "my_event_1", "Yay. It works! 1")
+	err = b.Broadcast("aaa", "my_event_2", "Yay. It works! 2")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = c.Broadcast("aaa", "my_event_2", "Yay. It works! 2")
+	err = c.Broadcast("aaa", "my_event_3", "Yay. It works! 3")
 	if err != nil {
 		t.Fatal(err)
 	}

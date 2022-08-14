@@ -31,13 +31,13 @@ http://localhost:9000/events?stream_id=some_stream_id
 Messages can be broadcast to all connected clients for a specified stream ID.
 
 ```
-broker.Broadcast("some_stream_id", "my message")
+broker.Broadcast("some_stream_id", "event_name", "my message")
 ```
 
 Optionally, a single client can be excluded from the broadcast.
 
 ```
-broker.Broadcast("some_stream_id", "my message", "client_id_to_exclude")
+broker.Broadcast("some_stream_id", "event_name" "my message", "client_id_to_exclude")
 ```
 
 Optionally a client ID can be set in the request context in a middleware function that runs before the http handler. The provided context key must be used when setting the client ID.

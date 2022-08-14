@@ -122,8 +122,7 @@ func doubleNewLineSplitFunc(data []byte, atEOF bool) (advance int, token []byte,
 		return 0, nil, nil
 	}
 
-	// Find the index of the input of a newline followed by a
-	// pound sign.
+	// Find the index of the input with 2 new lines
 	if i := strings.Index(string(data), "\n\n"); i >= 0 {
 		return i + 1, data[0:i], nil
 	}
